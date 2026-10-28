@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pickleball Tournament</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Pickleball Tournament</h1>
+  <div id="app"></div>
+
+  <!-- Paste your Firebase SDK script tags here -->
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyAufV5p-3K0O38GAlu6eAPa9SYA4d37tu8",
+    authDomain: "round-robin-pickleball-tourna.firebaseapp.com",
+    projectId: "round-robin-pickleball-tourna",
+    storageBucket: "round-robin-pickleball-tourna.firebasestorage.app",
+    messagingSenderId: "696831258600",
+    appId: "1:696831258600:web:c4beab8e9bb9da5383be5d",
+    measurementId: "G-V0C3S0DT3C"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } 
+  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, doc, getDoc } 
+  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// This builds the login form on the page
+document.getElementById("app").innerHTML = `
+  <div id="login-screen">
+    <h2>Login</h2>
+    <input type="email" id="email" placeholder="Email" /><br>
+    <input type="password" id="password" placeholder="Password" /><br>
+    <button id="login-btn">Log In</button>
+    <p id="login-error" style="color:red;"></p>
+  </div>
+`;
+
+document.getElementById("login-btn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    document.getElementById("login-error").textContent = "Login failed. Check email and password.";
+  }
+});
+
+// This checks who is logged in and what role they have
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    const role = userDoc.exists() ? userDoc.data().role : "editor";
+    console.log("Logged in as:", user.email, "Role:", role);
+showDashboard(role);
+    // Next, we'll build the main tournament dashboard here
+  }
+});
+import { collection, addDoc, onSnapshot } 
+  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+function showDashboard(role) {
+  document.getElementById("app").innerHTML = `
+    <h2>Team Entry</h2>
+    <input type="text" id="teamName" placeholder="Team Name" /><br>
+    <input type="text" id="player1" placeholder="Player 1 Name" /><br>
+    <input type="text" id="player2" placeholder="Player 2 Name" /><br>
+    <select id="division">
+      <option value="Beginners">Beginners</option>
+      <option value="Intermediate">Intermediate</option>
+    </select><br>
+    <button id="addTeamBtn">Add Team</button>
+    <h3>Teams</h3>
+    <ul id="teamList"></ul>
+  `;
+
+  document.getElementById("addTeamBtn").addEventListener("click", async () => {
+    const teamName = document.getElementById("teamName").value;
+    const player1 = document.getElementById("player1").value;
+    const player2 = document.getElementById("player2").value;
+    const division = document.getElementById("division").value;
+
+    if (teamName && player1 && player2) {
+      await addDoc(collection(db, "teams"), { teamName, player1, player2, division });
+      document.getElementById("teamName").value = "";
+      document.getElementById("player1").value = "";
+      document.getElementById("player2").value = "";
+    }
+  });
+
+  onSnapshot(collection(db, "teams"), (snapshot) => {
+    const list = document.getElementById("teamList");
+    list.innerHTML = "";
+    snapshot.forEach((doc) => {
+      const t = doc.data();
+      list.innerHTML += `<li>${t.teamName} (${t.division}) – ${t.player1} & ${t.player2}</li>`;
+    });
+  });
+}
+ </script> 
+</body>
+</html>
