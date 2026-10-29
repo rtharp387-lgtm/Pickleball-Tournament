@@ -17,12 +17,12 @@
 // All imports first
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } 
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } 
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { collection, addDoc, onSnapshot } 
-  from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js"; 
+  from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 // Then your Firebase configuration
 const firebaseConfig = {
@@ -75,7 +75,9 @@ showDashboard(role);
 
 function showDashboard(role) {
   document.getElementById("app").innerHTML = `
+    <button id="logout-btn">Log Out</button>
     <h2>Team Entry</h2>
+
     <input type="text" id="teamName" placeholder="Team Name" /><br>
     <input type="text" id="player1" placeholder="Player 1 Name" /><br>
     <input type="text" id="player2" placeholder="Player 2 Name" /><br>
@@ -87,7 +89,9 @@ function showDashboard(role) {
     <h3>Teams</h3>
     <ul id="teamList"></ul>
   `;
-
+  document.getElementById("logout-btn").addEventListener("click", () => {
+    signOut(auth);
+  });
   document.getElementById("addTeamBtn").addEventListener("click", async () => {
     const teamName = document.getElementById("teamName").value;
     const player1 = document.getElementById("player1").value;
