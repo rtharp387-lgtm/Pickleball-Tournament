@@ -19,9 +19,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebas
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc } 
+import { getFirestore, doc, getDoc, deleteDoc } 
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
-import { collection, addDoc, onSnapshot } 
+import { collection, addDoc, onSnapshot, getDocs }
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 // Then your Firebase configuration
@@ -87,12 +87,13 @@ function showDashboard(role) {
     <input type="text" id="player1" placeholder="Player 1 Name" /><br>
     <input type="text" id="player2" placeholder="Player 2 Name" /><br>
     <select id="division">
-      <option value="Beginners">Beginners</option>
-      <option value="Intermediate">Intermediate</option>
-    </select><br>
-    <button id="addTeamBtn">Add Team</button>
-    <h3>Teams</h3>
-    <ul id="teamList"></ul>
+  <option value="Beginners">Beginners</option>
+  <option value="Intermediate">Intermediate</option>
+</select><br>
+<button id="addTeamBtn">Add Team</button>
+${role === "admin" ? '<button id="resetBtn">Reset Tournament</button>' : ""}
+<h3>Teams</h3>
+<ul id="teamList"></ul>
   `;
   document.getElementById("logout-btn").addEventListener("click", () => {
     signOut(auth);
@@ -108,17 +109,35 @@ function showDashboard(role) {
       document.getElementById("teamName").value = "";
       document.getElementById("player1").value = "";
       document.getElementById("player2").value = "";
+          }
+    });
+
+  if (role === "admin") {
+  document.getElementById("resetBtn").addEventListener("click", async () => {
+    const confirmReset = confirm("Are you sure you want to delete ALL teams? This cannot be undone.");
+    if (confirmReset) {
+      const snapshot = await getDocs(collection(db, "teams"));
+      snapshot.forEach((docSnap) => {
+        deleteDoc(doc(db, "teams", docSnap.id));
+      });
     }
   });
+}
+ onSnapshot(collection(db, "teams"), (snapshot) => {
+  const list = document.getElementById("teamList");
+  list.innerHTML = "";
+  snapshot.forEach((docSnap) => {
+    const t = docSnap.data();
+    list.innerHTML += `<li>${t.teamName} (${t.division}) - ${t.player1} & ${t.player2} <button class="deleteBtn" data-id="${docSnap.id}">Delete</button></li>`;
+  });
 
-  onSnapshot(collection(db, "teams"), (snapshot) => {
-    const list = document.getElementById("teamList");
-    list.innerHTML = "";
-    snapshot.forEach((doc) => {
-      const t = doc.data();
-      list.innerHTML += `<li>${t.teamName} (${t.division}) – ${t.player1} & ${t.player2}</li>`;
+  document.querySelectorAll(".deleteBtn").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const id = e.target.getAttribute("data-id");
+      await deleteDoc(doc(db, "teams", id));
     });
   });
+});
 }
  </script> 
 </body>
