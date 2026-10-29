@@ -14,35 +14,32 @@
   <!-- Paste your Firebase SDK script tags here -->
 <script type="module">
   // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyAufV5p-3K0O38GAlu6eAPa9SYA4d37tu8",
-    authDomain: "round-robin-pickleball-tourna.firebaseapp.com",
-    projectId: "round-robin-pickleball-tourna",
-    storageBucket: "round-robin-pickleball-tourna.firebasestorage.app",
-    messagingSenderId: "696831258600",
-    appId: "1:696831258600:web:c4beab8e9bb9da5383be5d",
-    measurementId: "G-V0C3S0DT3C"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-
+// All imports first
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } 
-  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } 
-  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import { collection, addDoc, onSnapshot } 
+  from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js"; 
 
+// Then your Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAufV5p-3K0O38GAlu6eAPa9SYA4d37tu8",
+  authDomain: "round-robin-pickleball-tourna.firebaseapp.com",
+  projectId: "round-robin-pickleball-tourna",
+  storageBucket: "round-robin-pickleball-tourna.firebasestorage.app",
+  messagingSenderId: "696831258600",
+  appId: "1:696831258600:web:c4beab8e9bb9da5383be5d",
+  measurementId: "G-V0C3S0DT3C"
+};
+
+// Then initialize everything
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
 // This builds the login form on the page
 document.getElementById("app").innerHTML = `
   <div id="login-screen">
@@ -74,8 +71,7 @@ showDashboard(role);
     // Next, we'll build the main tournament dashboard here
   }
 });
-import { collection, addDoc, onSnapshot } 
-  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 function showDashboard(role) {
   document.getElementById("app").innerHTML = `
