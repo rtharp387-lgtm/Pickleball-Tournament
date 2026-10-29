@@ -91,7 +91,7 @@ function showDashboard(role) {
   <option value="Intermediate">Intermediate</option>
 </select><br>
 <button id="addTeamBtn">Add Team</button>
-${role === "admin" ? '<button id="resetBtn">Reset Tournament</button>' : ""}
+${role.toLowerCase() === "admin" ? '<button id="resetBtn">Reset Tournament</button>' : ""}
 <h3>Teams</h3>
 <ul id="teamList"></ul>
   `;
@@ -112,7 +112,7 @@ ${role === "admin" ? '<button id="resetBtn">Reset Tournament</button>' : ""}
           }
     });
 
-  if (role === "admin") {
+  if (role.toLowerCase() === "admin") {
   document.getElementById("resetBtn").addEventListener("click", async () => {
     const confirmReset = confirm("Are you sure you want to delete ALL teams? This cannot be undone.");
     if (confirmReset) {
