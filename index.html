@@ -87,12 +87,13 @@ function showDashboard(role) {
     <input type="text" id="player1" placeholder="Player 1 Name" /><br>
     <input type="text" id="player2" placeholder="Player 2 Name" /><br>
     <select id="division">
-  <option value="Beginners">Beginners</option>
-  <option value="Intermediate">Intermediate</option>
-</select><br>
-<button id="addTeamBtn">Add Team</button>
-${role.toLowerCase() === "admin" ? '<button id="resetBtn">Reset Tournament</button>' : ""}
-<button id="testPoolsBtn">Test Pool Calculation</button>
+   <option value="Beginners">Beginners</option>
+   <option value="Intermediate">Intermediate</option>
+ </select><br>
+ <button id="bulkAddBtn">Bulk Add Test Teams</button>
+ <button id="addTeamBtn">Add Team</button>
+ ${role.toLowerCase() === "admin" ? '<button id="resetBtn">Reset Tournament</button>' : ""}
+ <button id="testPoolsBtn">Test Pool Calculation</button>
 <h3>Teams</h3>
 <ul id="teamList"></ul>
   `;
@@ -112,6 +113,36 @@ ${role.toLowerCase() === "admin" ? '<button id="resetBtn">Reset Tournament</butt
       document.getElementById("player2").value = "";
           }
     });
+    document.getElementById("bulkAddBtn").addEventListener("click", async () => {
+  const testTeams = [
+    { teamName: "Dink Dynasty", player1: "Alex Morgan", player2: "Sam Lee", division: "Beginners" },
+    { teamName: "Net Ninjas", player1: "Jordan Kim", player2: "Casey Park", division: "Beginners" },
+    { teamName: "Smash Sisters", player1: "Taylor Reed", player2: "Morgan Blake", division: "Beginners" },
+    { teamName: "Kitchen Crashers", player1: "Jamie Fox", player2: "Drew Hayes", division: "Beginners" },
+    { teamName: "Paddle Pals", player1: "Chris Nolan", player2: "Pat Ryan", division: "Beginners" },
+    { teamName: "Ace Avengers", player1: "Jesse Cole", player2: "Robin Shaw", division: "Beginners" },
+    { teamName: "Volley Vipers", player1: "Dana White", player2: "Skyler Brooks", division: "Beginners" },
+    { teamName: "Lob Legends", player1: "Quinn Adams", player2: "Riley Stone", division: "Beginners" },
+    { teamName: "Serve Squad", player1: "Avery James", player2: "Logan Pierce", division: "Beginners" },
+    { teamName: "Power Paddlers", player1: "Blake Turner", player2: "Cameron Ellis", division: "Intermediate" },
+    { teamName: "Spin Doctors", player1: "Harper Lane", player2: "Rowan Gray", division: "Intermediate" },
+    { teamName: "Fault Line", player1: "Emerson Clark", player2: "Sage Walker", division: "Intermediate" },
+    { teamName: "Rally Rebels", player1: "Finley Scott", player2: "Hayden Moss", division: "Intermediate" },
+    { teamName: "Drop Shot Dragons", player1: "Parker Reyes", player2: "Elliot Vance", division: "Intermediate" },
+    { teamName: "Backspin Bandits", player1: "Reese Carter", player2: "Morgan Lee", division: "Intermediate" },
+    { teamName: "Baseline Bosses", player1: "Jules Owens", player2: "Micah Hart", division: "Intermediate" },
+    { teamName: "Smash Masters", player1: "Tatum Reed", player2: "Shawn Brooks", division: "Intermediate" },
+    { teamName: "Dink or Swim", player1: "Noel Rivera", player2: "Kendall Fox", division: "Intermediate" },
+    { teamName: "Top Spin Titans", player1: "Remy Jordan", player2: "Payton Cruz", division: "Intermediate" },
+    { teamName: "Court Crushers", player1: "Marlowe Bennett", player2: "Sawyer Hughes", division: "Intermediate" }
+  ];
+
+  for (const team of testTeams) {
+    await addDoc(collection(db, "teams"), team);
+  }
+
+  console.log("Bulk test teams added!");
+});
 document.getElementById("testPoolsBtn").addEventListener("click", () => {
   console.log("9 teams, 3 min games:", calculatePools(9, 3));
   console.log("9 teams, 4 min games:", calculatePools(9, 4));
