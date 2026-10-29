@@ -40,6 +40,7 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const db = getFirestore(app);
+function showLogin() {
 // This builds the login form on the page
 document.getElementById("app").innerHTML = `
   <div id="login-screen">
@@ -60,6 +61,7 @@ document.getElementById("login-btn").addEventListener("click", async () => {
     document.getElementById("login-error").textContent = "Login failed. Check email and password.";
   }
 });
+}
 
 // This checks who is logged in and what role they have
 onAuthStateChanged(auth, async (user) => {
@@ -69,6 +71,9 @@ onAuthStateChanged(auth, async (user) => {
     console.log("Logged in as:", user.email, "Role:", role);
 showDashboard(role);
     // Next, we'll build the main tournament dashboard here
+  }
+    else {
+    showLogin();
   }
 });
  
