@@ -92,6 +92,7 @@ function showDashboard(role) {
 </select><br>
 <button id="addTeamBtn">Add Team</button>
 ${role.toLowerCase() === "admin" ? '<button id="resetBtn">Reset Tournament</button>' : ""}
+<button id="testPoolsBtn">Test Pool Calculation</button>
 <h3>Teams</h3>
 <ul id="teamList"></ul>
   `;
@@ -111,7 +112,13 @@ ${role.toLowerCase() === "admin" ? '<button id="resetBtn">Reset Tournament</butt
       document.getElementById("player2").value = "";
           }
     });
-
+document.getElementById("testPoolsBtn").addEventListener("click", () => {
+  console.log("9 teams, 3 min games:", calculatePools(9, 3));
+  console.log("9 teams, 4 min games:", calculatePools(9, 4));
+  console.log("11 teams, 4 min games:", calculatePools(11, 4));
+  console.log("15 teams, 3 min games:", calculatePools(15, 3));
+  console.log("15 teams, 4 min games:", calculatePools(15, 4));
+});
   if (role.toLowerCase() === "admin") {
   document.getElementById("resetBtn").addEventListener("click", async () => {
     const confirmReset = confirm("Are you sure you want to delete ALL teams? This cannot be undone.");
@@ -139,6 +146,27 @@ ${role.toLowerCase() === "admin" ? '<button id="resetBtn">Reset Tournament</butt
   });
 });
 }
+
+      
+      function calculatePools(totalTeams, minGames) {
+        const minPoolSize = minGames + 1;
+
+        let numPools = Math.floor(totalTeams / minPoolSize);
+        if (numPools < 1) numPools = 1;
+
+        const basePoolSize = Math.floor(totalTeams / numPools);
+        const extraTeams = totalTeams % numPools;
+
+        const pools = [];
+        for (let i = 0; i < numPools; i++) {
+          const size = i < extraTeams ? basePoolSize + 1 : basePoolSize;
+          pools.push(size);
+        }
+
+        return pools;
+      }
+
+
  </script> 
 </body>
 </html>
