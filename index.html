@@ -19,7 +19,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebas
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, deleteDoc } 
+import { getFirestore, doc, getDoc, setDoc, deleteDoc } 
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { collection, addDoc, onSnapshot, query, where, getDocs }
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
@@ -100,7 +100,8 @@ function showDashboard(role) {
 </select>
 <button id="generateBeginnersBtn">Generate Pools (Beginners)</button>
 <button id="generateIntermediateBtn">Generate Pools (Intermediate)</button>
-<div id="poolResults"></div>
+<div id="poolResultsBeginners"></div>
+<div id="poolResultsIntermediate"></div>
 <h3>Teams</h3>
 <ul id="teamList"></ul>
   `;
@@ -183,42 +184,62 @@ async function getTeamsByDivision(division) {
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
+async function savePoolsToFirestore(division, pools) {
+  const poolsData = pools.map(pool => pool.map(t => t.teamName));
+  await setDoc(doc(db, "pools", division), { pools: poolsData });
+}
+
+async function loadPoolsFromFirestore(division) {
+  const docSnap = await getDoc(doc(db, "pools", division));
+  if (docSnap.exists()) {
+    return docSnap.data().pools;
+  }
+  return null;
+}
+
+function renderPools(elementId, divisionLabel, teamCount, poolsOfNames) {
+  let html = `<h4>${divisionLabel} (${teamCount} teams)</h4>`;
+  poolsOfNames.forEach((poolNames, i) => {
+    const poolLetter = String.fromCharCode(65 + i);
+    html += `<p><strong>Pool ${poolLetter}:</strong> ${poolNames.join(", ")}</p>`;
+    html += `<ul>`;
+    for (let a = 0; a < poolNames.length; a++) {
+      for (let b = a + 1; b < poolNames.length; b++) {
+        html += `<li>${poolNames[a]} vs. ${poolNames[b]}</li>`;
+      }
+    }
+    html += `</ul>`;
+  });
+  document.getElementById(elementId).innerHTML = html;
+}
 document.getElementById("generateBeginnersBtn").addEventListener("click", async () => {
+  const confirmGenerate = confirm("This will create new pools and matches, overwriting any existing ones. Continue?");
+  if (!confirmGenerate) return;
   const minGames = parseInt(document.getElementById("minGames").value);
   const teams = await getTeamsByDivision("Beginners");
   const poolSizes = calculatePools(teams.length, minGames);
   const pools = assignTeamsToPools(teams, poolSizes);
-  let html = `<h4>Beginners (${teams.length} teams)</h4>`;
-  pools.forEach((pool, i) => {
-    const poolLetter = String.fromCharCode(65 + i);
-    html += `<p><strong>Pool ${poolLetter}:</strong> ${pool.map(t => t.teamName).join(", ")}</p>`;
-    const matches = generateRoundRobinMatches(pool);
-    html += `<ul>`;
-    matches.forEach(([teamA, teamB]) => {
-      html += `<li>${teamA.teamName} vs. ${teamB.teamName}</li>`;
-    });
-    html += `</ul>`;
-  });
-  document.getElementById("poolResults").innerHTML = html;
+  await savePoolsToFirestore("Beginners", pools);
+  const poolNames = pools.map(pool => pool.map(t => t.teamName));
+  renderPools("poolResultsBeginners", "Beginners", teams.length, poolNames);
 });
 document.getElementById("generateIntermediateBtn").addEventListener("click", async () => {
+  const confirmGenerate = confirm("This will create new pools and matches, overwriting any existing ones. Continue?");
+  if (!confirmGenerate) return;
   const minGames = parseInt(document.getElementById("minGames").value);
   const teams = await getTeamsByDivision("Intermediate");
   const poolSizes = calculatePools(teams.length, minGames);
   const pools = assignTeamsToPools(teams, poolSizes);
-  let html = `<h4>Intermediate (${teams.length} teams)</h4>`;
-  pools.forEach((pool, i) => {
-    const poolLetter = String.fromCharCode(65 + i);
-    html += `<p><strong>Pool ${poolLetter}:</strong> ${pool.map(t => t.teamName).join(", ")}</p>`;
-    const matches = generateRoundRobinMatches(pool);
-    html += `<ul>`;
-    matches.forEach(([teamA, teamB]) => {
-      html += `<li>${teamA.teamName} vs. ${teamB.teamName}</li>`;
-    });
-    html += `</ul>`;
-  });
-  document.getElementById("poolResults").innerHTML = html;
+  await savePoolsToFirestore("Intermediate", pools);
+  const poolNames = pools.map(pool => pool.map(t => t.teamName));
+  renderPools("poolResultsIntermediate", "Intermediate", teams.length, poolNames);
 });
+(async () => {
+  const savedBeginners = await loadPoolsFromFirestore("Beginners");
+  if (savedBeginners) renderPools("poolResultsBeginners", "Beginners", savedBeginners.flat().length, savedBeginners);
+  const savedIntermediate = await loadPoolsFromFirestore("Intermediate");
+  if (savedIntermediate) renderPools("poolResultsIntermediate", "Intermediate", savedIntermediate.flat().length, savedIntermediate);
+})();
 document.getElementById("testPoolsBtn").addEventListener("click", () => {
   console.log("9 teams, 3 min games:", calculatePools(9, 3));
   console.log("9 teams, 4 min games:", calculatePools(9, 4));
