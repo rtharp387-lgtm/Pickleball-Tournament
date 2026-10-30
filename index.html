@@ -290,6 +290,17 @@ async function getAdvancingTeams(division, poolsOfNames) {
   return results;
 }
 
+async function getMatchScores(division) {
+  const q = query(collection(db, "matches"), where("division", "==", division));
+  const snapshot = await getDocs(q);
+  const scores = {};
+  snapshot.docs.forEach(d => {
+    const data = d.data();
+    scores[d.id] = { scoreA: data.scoreA || 0, scoreB: data.scoreB || 0, completed: data.completed || false };
+  });
+  return scores;
+}
+
 async function exportResultsToCSV(division, poolsOfNames) {
   let csvContent = "Pool,Team,Wins,Losses,Diff\n";
   for (let i = 0; i < poolsOfNames.length; i++) {
@@ -332,8 +343,11 @@ async function loadPoolsFromFirestore(division) {
     return docSnap.data().pools;
   }
   return null;
-}function renderPools(elementId, divisionLabel, teamCount, poolsOfNames) {
-let html = `<h4>${divisionLabel} (${teamCount} teams)</h4>`;
+
+}async function renderPools(elementId, divisionLabel, teamCount, poolsOfNames) {
+  const savedScores = await getMatchScores(divisionLabel);
+  let html = `<h4>${divisionLabel} (${teamCount} teams)</h4>`;
+
 html += `<button class="viewAdvancingBtn" data-division="${divisionLabel}">View Advancing Teams</button>`;
 html += `<button class="downloadCsvBtn" data-division="${divisionLabel}">Download Results (CSV)</button>`;
 html += `<button class="printResultsBtn" data-division="${divisionLabel}">Print Results</button>`;
