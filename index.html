@@ -205,7 +205,9 @@ async function saveMatchesToFirestore(division, pools) {
     const poolLetter = String.fromCharCode(65 + i);
     const matches = generateRoundRobinMatches(pools[i]);
     for (const [teamA, teamB] of matches) {
-      await addDoc(collection(db, "matches"), {
+      const matchId = `${division}_${poolLetter}_${teamA.teamName}_vs_${teamB.teamName}`
+        .replace(/[^a-zA-Z0-9]/g, "_");
+      await setDoc(doc(db, "matches", matchId), {
         division: division,
         poolName: poolLetter,
         teamA: teamA.teamName,
