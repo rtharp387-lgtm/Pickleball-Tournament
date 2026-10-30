@@ -276,6 +276,20 @@ async function calculateStandings(division, poolLetter, teamNames) {
   });
 }
 
+async function getAdvancingTeams(division, poolsOfNames) {
+  const results = [];
+  for (let i = 0; i < poolsOfNames.length; i++) {
+    const poolLetter = String.fromCharCode(65 + i);
+    const standings = await calculateStandings(division, poolLetter, poolsOfNames[i]);
+    results.push({
+      pool: poolLetter,
+      first: standings[0] ? standings[0].team : "-",
+      second: standings[1] ? standings[1].team : "-"
+    });
+  }
+  return results;
+}
+
 async function loadPoolsFromFirestore(division) {
   const docSnap = await getDoc(doc(db, "pools", division));
   if (docSnap.exists()) {
@@ -283,7 +297,9 @@ async function loadPoolsFromFirestore(division) {
   }
   return null;
 }function renderPools(elementId, divisionLabel, teamCount, poolsOfNames) {
-  let html = `<h4>${divisionLabel} (${teamCount} teams)</h4>`;
+let html = `<h4>${divisionLabel} (${teamCount} teams)</h4>`;
+html += `<button class="viewAdvancingBtn" data-division="${divisionLabel}">View Advancing Teams</button>`;
+html += `<div id="${elementId}-advancing" style="display:none"></div>`;
   poolsOfNames.forEach((poolNames, i) => {
     const poolLetter = String.fromCharCode(65 + i);
     const poolId = `${elementId}-pool-${poolLetter}`;
@@ -349,6 +365,22 @@ async function loadPoolsFromFirestore(division) {
         document.getElementById(`${poolId}-matches`).style.display = "block";
       });
     });
+  });
+
+  document.querySelector(`#${elementId} .viewAdvancingBtn`).addEventListener("click", async () => {
+    const advancingDiv = document.getElementById(`${elementId}-advancing`);
+    if (advancingDiv.style.display === "block") {
+      advancingDiv.style.display = "none";
+      return;
+    }
+    const results = await getAdvancingTeams(divisionLabel, poolsOfNames);
+    let advancingHtml = `<table border="1" cellpadding="5"><tr><th>Pool</th><th>1st Place</th><th>2nd Place</th></tr>`;
+    results.forEach(r => {
+      advancingHtml += `<tr><td>${r.pool}</td><td>${r.first}</td><td>${r.second}</td></tr>`;
+    });
+    advancingHtml += `</table>`;
+    advancingDiv.innerHTML = advancingHtml;
+    advancingDiv.style.display = "block";
   });
 }
 document.getElementById("generateBeginnersBtn").addEventListener("click", async () => {
