@@ -185,7 +185,10 @@ async function getTeamsByDivision(division) {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 async function savePoolsToFirestore(division, pools) {
-  const poolsData = pools.map(pool => pool.map(t => t.teamName));
+  const poolsData = pools.map((pool, i) => ({
+    poolName: String.fromCharCode(65 + i),
+    teams: pool.map(t => t.teamName)
+  }));
   await setDoc(doc(db, "pools", division), { pools: poolsData });
 }
 
@@ -236,9 +239,15 @@ document.getElementById("generateIntermediateBtn").addEventListener("click", asy
 });
 (async () => {
   const savedBeginners = await loadPoolsFromFirestore("Beginners");
-  if (savedBeginners) renderPools("poolResultsBeginners", "Beginners", savedBeginners.flat().length, savedBeginners);
+  if (savedBeginners) {
+    const poolNames = savedBeginners.map(p => p.teams);
+    renderPools("poolResultsBeginners", "Beginners", poolNames.flat().length, poolNames);
+  }
   const savedIntermediate = await loadPoolsFromFirestore("Intermediate");
-  if (savedIntermediate) renderPools("poolResultsIntermediate", "Intermediate", savedIntermediate.flat().length, savedIntermediate);
+  if (savedIntermediate) {
+    const poolNames = savedIntermediate.map(p => p.teams);
+    renderPools("poolResultsIntermediate", "Intermediate", poolNames.flat().length, poolNames);
+  }
 })();
 document.getElementById("testPoolsBtn").addEventListener("click", () => {
   console.log("9 teams, 3 min games:", calculatePools(9, 3));
