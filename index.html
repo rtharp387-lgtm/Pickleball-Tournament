@@ -192,6 +192,32 @@ async function savePoolsToFirestore(division, pools) {
   await setDoc(doc(db, "pools", division), { pools: poolsData });
 }
 
+async function saveMatchesToFirestore(division, pools) {
+  // Remove any previously saved matches for this division
+  const q = query(collection(db, "matches"), where("division", "==", division));
+  const existingMatches = await getDocs(q);
+  for (const docSnap of existingMatches.docs) {
+    await deleteDoc(docSnap.ref);
+  }
+
+  // Create a new match document for every matchup in every pool
+  for (let i = 0; i < pools.length; i++) {
+    const poolLetter = String.fromCharCode(65 + i);
+    const matches = generateRoundRobinMatches(pools[i]);
+    for (const [teamA, teamB] of matches) {
+      await addDoc(collection(db, "matches"), {
+        division: division,
+        poolName: poolLetter,
+        teamA: teamA.teamName,
+        teamB: teamB.teamName,
+        scoreA: null,
+        scoreB: null,
+        completed: false
+      });
+    }
+  }
+}
+
 async function loadPoolsFromFirestore(division) {
   const docSnap = await getDoc(doc(db, "pools", division));
   if (docSnap.exists()) {
@@ -223,6 +249,7 @@ document.getElementById("generateBeginnersBtn").addEventListener("click", async 
   const poolSizes = calculatePools(teams.length, minGames);
   const pools = assignTeamsToPools(teams, poolSizes);
   await savePoolsToFirestore("Beginners", pools);
+  await saveMatchesToFirestore("Beginners", pools);
   const poolNames = pools.map(pool => pool.map(t => t.teamName));
   renderPools("poolResultsBeginners", "Beginners", teams.length, poolNames);
 });
@@ -234,6 +261,7 @@ document.getElementById("generateIntermediateBtn").addEventListener("click", asy
   const poolSizes = calculatePools(teams.length, minGames);
   const pools = assignTeamsToPools(teams, poolSizes);
   await savePoolsToFirestore("Intermediate", pools);
+    await saveMatchesToFirestore("Intermediate", pools);
   const poolNames = pools.map(pool => pool.map(t => t.teamName));
   renderPools("poolResultsIntermediate", "Intermediate", teams.length, poolNames);
 });
