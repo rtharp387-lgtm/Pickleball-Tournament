@@ -21,7 +21,7 @@ import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, deleteDoc } 
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
-import { collection, addDoc, onSnapshot, getDocs }
+import { collection, addDoc, onSnapshot, query, where, getDocs }
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 // Then your Firebase configuration
@@ -94,6 +94,13 @@ function showDashboard(role) {
  <button id="addTeamBtn">Add Team</button>
  ${role.toLowerCase() === "admin" ? '<button id="resetBtn">Reset Tournament</button>' : ""}
  <button id="testPoolsBtn">Test Pool Calculation</button>
+ <select id="minGames">
+  <option value="3">Minimum 3 games</option>
+  <option value="4">Minimum 4 games</option>
+</select>
+<button id="generateBeginnersBtn">Generate Pools (Beginners)</button>
+<button id="generateIntermediateBtn">Generate Pools (Intermediate)</button>
+<div id="poolResults"></div>
 <h3>Teams</h3>
 <ul id="teamList"></ul>
   `;
@@ -142,6 +149,27 @@ function showDashboard(role) {
   }
 
   console.log("Bulk test teams added!");
+});
+async function getTeamsByDivision(division) {
+  const q = query(collection(db, "teams"), where("division", "==", division));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
+document.getElementById("generateBeginnersBtn").addEventListener("click", async () => {
+  const minGames = parseInt(document.getElementById("minGames").value);
+  const teams = await getTeamsByDivision("Beginners");
+  const pools = calculatePools(teams.length, minGames);
+  document.getElementById("poolResults").innerHTML =
+    `<p><strong>Beginners (${teams.length} teams):</strong> Pools: ${pools.join(", ")}</p>`;
+});
+
+document.getElementById("generateIntermediateBtn").addEventListener("click", async () => {
+  const minGames = parseInt(document.getElementById("minGames").value);
+  const teams = await getTeamsByDivision("Intermediate");
+  const pools = calculatePools(teams.length, minGames);
+  document.getElementById("poolResults").innerHTML =
+    `<p><strong>Intermediate (${teams.length} teams):</strong> Pools: ${pools.join(", ")}</p>`;
 });
 document.getElementById("testPoolsBtn").addEventListener("click", () => {
   console.log("9 teams, 3 min games:", calculatePools(9, 3));
