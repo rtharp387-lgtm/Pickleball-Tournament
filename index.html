@@ -150,26 +150,54 @@ function showDashboard(role) {
 
   console.log("Bulk test teams added!");
 });
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function assignTeamsToPools(teams, poolSizes) {
+  const shuffled = shuffleArray(teams);
+  const pools = [];
+  let index = 0;
+  for (const size of poolSizes) {
+    pools.push(shuffled.slice(index, index + size));
+    index += size;
+  }
+  return pools;
+}
 async function getTeamsByDivision(division) {
   const q = query(collection(db, "teams"), where("division", "==", division));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
-
 document.getElementById("generateBeginnersBtn").addEventListener("click", async () => {
   const minGames = parseInt(document.getElementById("minGames").value);
   const teams = await getTeamsByDivision("Beginners");
-  const pools = calculatePools(teams.length, minGames);
-  document.getElementById("poolResults").innerHTML =
-    `<p><strong>Beginners (${teams.length} teams):</strong> Pools: ${pools.join(", ")}</p>`;
+  const poolSizes = calculatePools(teams.length, minGames);
+  const pools = assignTeamsToPools(teams, poolSizes);
+  let html = `<h4>Beginners (${teams.length} teams)</h4>`;
+  pools.forEach((pool, i) => {
+    const poolLetter = String.fromCharCode(65 + i);
+    html += `<p><strong>Pool ${poolLetter}:</strong> ${pool.map(t => t.teamName).join(", ")}</p>`;
+  });
+  document.getElementById("poolResults").innerHTML = html;
 });
 
 document.getElementById("generateIntermediateBtn").addEventListener("click", async () => {
   const minGames = parseInt(document.getElementById("minGames").value);
   const teams = await getTeamsByDivision("Intermediate");
-  const pools = calculatePools(teams.length, minGames);
-  document.getElementById("poolResults").innerHTML =
-    `<p><strong>Intermediate (${teams.length} teams):</strong> Pools: ${pools.join(", ")}</p>`;
+  const poolSizes = calculatePools(teams.length, minGames);
+  const pools = assignTeamsToPools(teams, poolSizes);
+  let html = `<h4>Intermediate (${teams.length} teams)</h4>`;
+  pools.forEach((pool, i) => {
+    const poolLetter = String.fromCharCode(65 + i);
+    html += `<p><strong>Pool ${poolLetter}:</strong> ${pool.map(t => t.teamName).join(", ")}</p>`;
+  });
+  document.getElementById("poolResults").innerHTML = html;
 });
 document.getElementById("testPoolsBtn").addEventListener("click", () => {
   console.log("9 teams, 3 min games:", calculatePools(9, 3));
