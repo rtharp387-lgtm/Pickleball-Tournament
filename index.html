@@ -169,6 +169,15 @@ function assignTeamsToPools(teams, poolSizes) {
   }
   return pools;
 }
+function generateRoundRobinMatches(teams) {
+  const matches = [];
+  for (let i = 0; i < teams.length; i++) {
+    for (let j = i + 1; j < teams.length; j++) {
+      matches.push([teams[i], teams[j]]);
+    }
+  }
+  return matches;
+}
 async function getTeamsByDivision(division) {
   const q = query(collection(db, "teams"), where("division", "==", division));
   const snapshot = await getDocs(q);
@@ -183,10 +192,15 @@ document.getElementById("generateBeginnersBtn").addEventListener("click", async 
   pools.forEach((pool, i) => {
     const poolLetter = String.fromCharCode(65 + i);
     html += `<p><strong>Pool ${poolLetter}:</strong> ${pool.map(t => t.teamName).join(", ")}</p>`;
+    const matches = generateRoundRobinMatches(pool);
+    html += `<ul>`;
+    matches.forEach(([teamA, teamB]) => {
+      html += `<li>${teamA.teamName} vs. ${teamB.teamName}</li>`;
+    });
+    html += `</ul>`;
   });
   document.getElementById("poolResults").innerHTML = html;
 });
-
 document.getElementById("generateIntermediateBtn").addEventListener("click", async () => {
   const minGames = parseInt(document.getElementById("minGames").value);
   const teams = await getTeamsByDivision("Intermediate");
@@ -196,6 +210,12 @@ document.getElementById("generateIntermediateBtn").addEventListener("click", asy
   pools.forEach((pool, i) => {
     const poolLetter = String.fromCharCode(65 + i);
     html += `<p><strong>Pool ${poolLetter}:</strong> ${pool.map(t => t.teamName).join(", ")}</p>`;
+    const matches = generateRoundRobinMatches(pool);
+    html += `<ul>`;
+    matches.forEach(([teamA, teamB]) => {
+      html += `<li>${teamA.teamName} vs. ${teamB.teamName}</li>`;
+    });
+    html += `</ul>`;
   });
   document.getElementById("poolResults").innerHTML = html;
 });
