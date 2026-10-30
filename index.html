@@ -290,6 +290,42 @@ async function getAdvancingTeams(division, poolsOfNames) {
   return results;
 }
 
+async function exportResultsToCSV(division, poolsOfNames) {
+  let csvContent = "Pool,Team,Wins,Losses,Diff\n";
+  for (let i = 0; i < poolsOfNames.length; i++) {
+    const poolLetter = String.fromCharCode(65 + i);
+    const standings = await calculateStandings(division, poolLetter, poolsOfNames[i]);
+    standings.forEach(s => {
+      csvContent += `${poolLetter},${s.team},${s.wins},${s.losses},${s.diff}\n`;
+    });
+  }
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${division}-results.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+async function printResults(division, poolsOfNames) {
+  let printContent = `<h2>${division} Results</h2>`;
+  for (let i = 0; i < poolsOfNames.length; i++) {
+    const poolLetter = String.fromCharCode(65 + i);
+    const standings = await calculateStandings(division, poolLetter, poolsOfNames[i]);
+    printContent += `<h3>Pool ${poolLetter}</h3>`;
+    printContent += `<table border="1" cellpadding="5"><tr><th>Team</th><th>Wins</th><th>Losses</th><th>Diff</th></tr>`;
+    standings.forEach(s => {
+      printContent += `<tr><td>${s.team}</td><td>${s.wins}</td><td>${s.losses}</td><td>${s.diff}</td></tr>`;
+    });
+    printContent += `</table>`;
+  }
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`<html><head><title>${division} Results</title></head><body>${printContent}</body></html>`);
+  printWindow.document.close();
+  printWindow.print();
+}
+
 async function loadPoolsFromFirestore(division) {
   const docSnap = await getDoc(doc(db, "pools", division));
   if (docSnap.exists()) {
@@ -299,6 +335,8 @@ async function loadPoolsFromFirestore(division) {
 }function renderPools(elementId, divisionLabel, teamCount, poolsOfNames) {
 let html = `<h4>${divisionLabel} (${teamCount} teams)</h4>`;
 html += `<button class="viewAdvancingBtn" data-division="${divisionLabel}">View Advancing Teams</button>`;
+html += `<button class="downloadCsvBtn" data-division="${divisionLabel}">Download Results (CSV)</button>`;
+html += `<button class="printResultsBtn" data-division="${divisionLabel}">Print Results</button>`;
 html += `<div id="${elementId}-advancing" style="display:none"></div>`;
   poolsOfNames.forEach((poolNames, i) => {
     const poolLetter = String.fromCharCode(65 + i);
@@ -381,6 +419,14 @@ html += `<div id="${elementId}-advancing" style="display:none"></div>`;
     advancingHtml += `</table>`;
     advancingDiv.innerHTML = advancingHtml;
     advancingDiv.style.display = "block";
+  });
+
+  document.querySelector(`#${elementId} .downloadCsvBtn`).addEventListener("click", async () => {
+    await exportResultsToCSV(divisionLabel, poolsOfNames);
+  });
+
+  document.querySelector(`#${elementId} .printResultsBtn`).addEventListener("click", async () => {
+    await printResults(divisionLabel, poolsOfNames);
   });
 }
 document.getElementById("generateBeginnersBtn").addEventListener("click", async () => {
