@@ -19,7 +19,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebas
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-analytics.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, deleteDoc } 
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc } 
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { collection, addDoc, onSnapshot, query, where, getDocs }
   from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
@@ -218,6 +218,21 @@ async function saveMatchesToFirestore(division, pools) {
   }
 }
 
+async function saveMatchScore(division, poolName, teamA, teamB, scoreA, scoreB) {
+  const q = query(
+    collection(db, "matches"),
+    where("division", "==", division),
+    where("poolName", "==", poolName),
+    where("teamA", "==", teamA),
+    where("teamB", "==", teamB)
+  );
+  const snapshot = await getDocs(q);
+  if (!snapshot.empty) {
+    const matchDoc = snapshot.docs[0];
+    await updateDoc(matchDoc.ref, { scoreA, scoreB, completed: true });
+  }
+}
+
 async function loadPoolsFromFirestore(division) {
   const docSnap = await getDoc(doc(db, "pools", division));
   if (docSnap.exists()) {
@@ -225,7 +240,6 @@ async function loadPoolsFromFirestore(division) {
   }
   return null;
 }
-
 function renderPools(elementId, divisionLabel, teamCount, poolsOfNames) {
   let html = `<h4>${divisionLabel} (${teamCount} teams)</h4>`;
   poolsOfNames.forEach((poolNames, i) => {
@@ -234,12 +248,35 @@ function renderPools(elementId, divisionLabel, teamCount, poolsOfNames) {
     html += `<ul>`;
     for (let a = 0; a < poolNames.length; a++) {
       for (let b = a + 1; b < poolNames.length; b++) {
-        html += `<li>${poolNames[a]} vs. ${poolNames[b]}</li>`;
+        const matchId = `${divisionLabel}-${poolLetter}-${a}-${b}`;
+        html += `<li>
+          ${poolNames[a]} vs. ${poolNames[b]}
+          <input type="number" class="scoreA" data-match="${matchId}" style="width:40px" placeholder="0">
+          -
+          <input type="number" class="scoreB" data-match="${matchId}" style="width:40px" placeholder="0">
+          <button class="saveScoreBtn" data-match="${matchId}" data-division="${divisionLabel}" data-pool="${poolLetter}" data-team-a="${poolNames[a]}" data-team-b="${poolNames[b]}">Save</button>
+        </li>`;
       }
     }
     html += `</ul>`;
   });
   document.getElementById(elementId).innerHTML = html;
+
+  document.querySelectorAll(`#${elementId} .saveScoreBtn`).forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const matchId = btn.dataset.match;
+      const scoreAInput = document.querySelector(`#${elementId} .scoreA[data-match="${matchId}"]`);
+      const scoreBInput = document.querySelector(`#${elementId} .scoreB[data-match="${matchId}"]`);
+      const scoreA = parseInt(scoreAInput.value);
+      const scoreB = parseInt(scoreBInput.value);
+      if (isNaN(scoreA) || isNaN(scoreB)) {
+        alert("Please enter both scores before saving.");
+        return;
+      }
+      await saveMatchScore(btn.dataset.division, btn.dataset.pool, btn.dataset.teamA, btn.dataset.teamB, scoreA, scoreB);
+      alert("Score saved!");
+    });
+  });
 }
 document.getElementById("generateBeginnersBtn").addEventListener("click", async () => {
   const confirmGenerate = confirm("This will create new pools and matches, overwriting any existing ones. Continue?");
