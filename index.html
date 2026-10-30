@@ -261,7 +261,7 @@ document.getElementById("generateIntermediateBtn").addEventListener("click", asy
   const poolSizes = calculatePools(teams.length, minGames);
   const pools = assignTeamsToPools(teams, poolSizes);
   await savePoolsToFirestore("Intermediate", pools);
-    await saveMatchesToFirestore("Intermediate", pools);
+  await saveMatchesToFirestore("Intermediate", pools);
   const poolNames = pools.map(pool => pool.map(t => t.teamName));
   renderPools("poolResultsIntermediate", "Intermediate", teams.length, poolNames);
 });
